@@ -1,0 +1,52 @@
+[disk]
+boot_size = "+200M"
+device = "/dev/sda"
+
+[zfs.root.properties]
+normalization = "formD"
+atime = "off"
+compression = "lz4"
+xattr = "sa"
+
+[zfs.pool]
+ashift = 13
+name = "zroot"
+
+## Datasets
+
+[[zfs.datasets]]
+name = "root"
+mount = "/"
+properties = { "com.sun:auto-snapshot" = true }
+
+[[zfs.datasets]]
+name = "nix"
+mount = "/nix"
+
+### home
+
+[[zfs.datasets]]
+name = "home"
+mount = "/home"
+properties = { "com.sun:auto-snapshot" = true, setuid = "off" }
+
+[[zfs.datasets]]
+name = "home/root"
+mount = "/root"
+
+### var
+
+[[zfs.datasets]]
+name = "var"
+mount = "/mnt/var"
+properties = { exec = "off", setuid = "off" }
+
+[[zfs.datasets]]
+name = "var/log"
+mount = "/mnt/var/log"
+properties = { acltype = "posixacl" }
+
+[[zfs.datasets]]
+name = "var/tmp"
+mount = "/mnt/var/tmp"
+properties = { exec = "on" }
