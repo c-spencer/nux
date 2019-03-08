@@ -79,30 +79,40 @@ fn install(settings: &Settings) {
         disk::Partition::new()
             .label("zfsroot")
             .code("8300")
-            .size("0"),
+            .size("0").filesystem(disk::Filesystem::Luks(disk::LuksFilesystem {
+                passphrase: "jimminy".to_owned(),
+                filesystem: Box::new(disk::Filesystem::Zfs(settings.zfs.clone()))
+            })),
     );
 
     exec(root_disk.format_cmd());
 
-    // format_disk(settings);
-
-    let luks_partition = encrypt_partition(
-        "password",
-        "/dev/disk/by-partlabel/zfsroot",
-        "decrypted-zfsroot",
-    );
-
-    // Pool and defaults
-
-    exec(settings.zfs.zpool_cmd(&luks_partition));
-
-    for cmd in settings.zfs.dataset_cmds() {
+    for cmd in root_disk.cmds() {
         exec(cmd);
     }
 
+    exec("NOT ON YOUR NELLY");
+
+    // format_disk(settings);
+
+    // let luks_partition = encrypt_partition(
+    //     "password",
+    //     "/dev/disk/by-partlabel/zfsroot",
+    //     "decrypted-zfsroot",
+    // );
+
+    // Pool and defaults
+
+    // exec(settings.zfs.zpool_cmd(&luks_partition));
+
+    // for cmd in settings.zfs.dataset_cmds() {
+    //     exec(cmd);
+    // }
+
     // Boot
 
-    format_boot_partition();
+    // format_boot_partition();
+    
     create_keyfile("password", "/dev/disk/by-partlabel/zfsroot");
 
     // Nixos config

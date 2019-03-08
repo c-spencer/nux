@@ -1,24 +1,24 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct ZfsSettings {
     pool: ZfsPool,
     root: ZfsRoot,
     datasets: Vec<ZfsDataset>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct ZfsPool {
     ashift: i32,
     name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct ZfsRoot {
     properties: Option<HashMap<String, String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct ZfsDataset {
     name: String,
     mount: String,
