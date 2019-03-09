@@ -32,7 +32,7 @@ impl Command {
             Command::Repository(cmd) => cmd.run(),
 
             Command::Generate(cmd) => {
-                cmd.run();
+                cmd.run().unwrap();
             }
         }
     }

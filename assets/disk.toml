@@ -15,23 +15,23 @@ name = "zroot"
 
 [[datasets]]
 name = "root"
-mount = "/"
+mount = "/mnt"
 properties = { "com.sun:auto-snapshot" = true }
 
 [[datasets]]
 name = "nix"
-mount = "/nix"
+mount = "/mnt/nix"
 
 ### home
 
 [[datasets]]
 name = "home"
-mount = "/home"
+mount = "/mnt/home"
 properties = { "com.sun:auto-snapshot" = true, setuid = "off" }
 
 [[datasets]]
 name = "home/root"
-mount = "/root"
+mount = "/mnt/root"
 
 ### var
 
