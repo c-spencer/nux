@@ -21,8 +21,18 @@ Nominally "NixOS User eXperience", `nux` is intended to be a CLI tool for helpin
   - [ ] Save disk config to git
 - [ ] Initial NixOS config
   - [ ] Inject bootloader config
-  - [ ] Inject sensible nix zfs configuration (taking cues from [themelios](https://github.com/a-schaefers/themelios))
+  - [ ] Inject sensible nix zfs configuration
   - [ ] Store nix config in git
   - [ ] Pull nix config from existing git
   - [ ] Setup initial user
   - [ ] Setup [home manager](https://github.com/rycee/home-manager)
+
+# References
+
+- https://nixos.wiki/wiki/NixOS_on_ZFS
+- https://elvishjerricco.github.io/2018/12/06/encrypted-boot-on-zfs-with-nixos.html
+- https://github.com/a-schaefers/themelios
+- https://github.com/yacinehmito/yarn-nix
+- https://github.com/barrucadu/nixfiles
+- https://github.com/jgillich/nixos
+- https://developer.atlassian.com/blog/2016/02/best-way-to-store-dotfiles-git-bare-repo/
