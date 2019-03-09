@@ -1,31 +1,24 @@
 use config::{Config, ConfigError, File};
 use structopt::StructOpt;
 
-mod disk;
-mod zfs;
+use crate::disk;
 
 #[derive(StructOpt, Debug)]
 pub struct InstallCommand {
     disk: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-struct Settings {
-    disk: disk::DiskSettings,
-    zfs: zfs::ZfsSettings,
-}
-
 impl InstallCommand {
     pub fn run(&self) -> Result<(), ConfigError> {
         let mut s = Config::new();
 
-        s.merge(File::with_name("nux.toml"))?;
+        s.merge(File::with_name("disk.toml"))?;
 
         if let Some(disk) = self.disk.clone() {
-            s.set("disk.device", disk)?;
+            s.set("device", disk)?;
         }
 
-        let settings: Settings = s.try_into::<Settings>()?;
+        let settings: disk::DiskSettings = s.try_into::<disk::DiskSettings>()?;
 
         install(&settings);
 
@@ -35,30 +28,8 @@ impl InstallCommand {
     }
 }
 
-fn exec<S: Into<String>>(s: S) {
-    println!("{}", s.into());
-}
-
-fn encrypt_partition(password: &str, device: &str, name: &str) -> String {
-    exec(format!(
-        "echo {password} | cryptsetup luksFormat {device}",
-        password = password,
-        device = device
-    ));
-    exec(format!(
-        "echo {password} | cryptsetup open {device} {name}",
-        password = password,
-        device = device,
-        name = name
-    ));
-
-    format!("/dev/mapper/{name}", name = name)
-}
-
-fn format_boot_partition() {
-    exec("mkfs.fat -F 32 /dev/disk/by-partlabel/efiboot");
-    exec("mkdir /mnt/efi");
-    exec("mount /dev/disk/by-partlabel/efiboot /mnt/efi");
+fn exec<S: AsRef<str>>(s: S) {
+    println!("{}", s.as_ref());
 }
 
 fn create_keyfile(password: &str, encrypted_target: &str) {
@@ -74,45 +45,28 @@ fn create_keyfile(password: &str, encrypted_target: &str) {
     exec("echo ./keyfile.bin | cpio -o -H newc -R +0:+0 --reproducible | gzip -9 > /mnt/boot/initrd.keys.gz");
 }
 
-fn install(settings: &Settings) {
-    let root_disk = settings.disk.get_disk().add_partition(
-        disk::Partition::new()
-            .label("zfsroot")
-            .code("8300")
-            .size("0").filesystem(disk::Filesystem::Luks(disk::LuksFilesystem {
-                passphrase: "jimminy".to_owned(),
-                filesystem: Box::new(disk::Filesystem::Zfs(settings.zfs.clone()))
-            })),
-    );
-
-    exec(root_disk.format_cmd());
-
-    for cmd in root_disk.cmds() {
-        exec(cmd);
-    }
-
-    exec("NOT ON YOUR NELLY");
-
-    // format_disk(settings);
-
-    // let luks_partition = encrypt_partition(
-    //     "password",
-    //     "/dev/disk/by-partlabel/zfsroot",
-    //     "decrypted-zfsroot",
+fn install(settings: &disk::DiskSettings) {
+    let root_disk = settings.get_disk();
+    // .add_partition(
+    //     disk::Partition::new()
+    //         .label("zfsroot")
+    //         .code("8300")
+    //         .size("0").filesystem(disk::Filesystem::Luks(disk::LuksFilesystem {
+    //             passphrase: "jimminy".to_owned(),
+    //             filesystem: Box::new(disk::Filesystem::Zfs(settings.zfs.clone()))
+    //         })),
     // );
 
-    // Pool and defaults
+    for cmd in root_disk.cmds() {
+        println!("{:?}", cmd);
+    }
 
-    // exec(settings.zfs.zpool_cmd(&luks_partition));
-
-    // for cmd in settings.zfs.dataset_cmds() {
-    //     exec(cmd);
-    // }
+    exec("--------------------------------------------------------------------");
 
     // Boot
 
     // format_boot_partition();
-    
+
     create_keyfile("password", "/dev/disk/by-partlabel/zfsroot");
 
     // Nixos config

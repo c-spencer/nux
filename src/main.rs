@@ -2,6 +2,7 @@
 extern crate serde_derive;
 
 mod commands;
+mod disk;
 
 use commands::Command;
 
