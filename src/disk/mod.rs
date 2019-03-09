@@ -3,7 +3,7 @@ use duct_util::Cmd;
 
 use std::collections::HashMap;
 
-mod duct_util;
+pub mod duct_util;
 mod zfs;
 
 #[derive(Debug, Deserialize)]
@@ -17,6 +17,20 @@ pub struct DiskSettings {
 
 impl DiskSettings {
     pub fn get_disk(&self) -> Disk {
+        let passphrase =
+            rpassword::read_password_from_tty(Some("Passphrase for LUKS partition: ")).unwrap();
+
+        println!();
+
+        let passphrase_confirm =
+            rpassword::read_password_from_tty(Some("Confirm passphrase: ")).unwrap();
+
+        println!();
+
+        if passphrase != passphrase_confirm {
+            panic!("Passphrases didn't match!");
+        }
+
         Disk::new(&*self.device)
             .add_partition(
                 Partition::new()
@@ -33,7 +47,7 @@ impl DiskSettings {
                     .code("8300")
                     .size("0")
                     .filesystem(Filesystem::Luks(LuksFilesystem {
-                        passphrase: "jimminy".to_owned(),
+                        passphrase: passphrase,
                         filesystem: Box::new(Filesystem::Zfs(zfs::ZfsSettings {
                             pool: self.pool.clone(),
                             properties: self.properties.clone(),
@@ -79,6 +93,25 @@ impl Disk {
                 cmds.push(cmd);
             }
         }
+
+        // TODO: This needs a proper home.
+
+        cmds.push(Cmd::new("mkdir").arg("-p").arg("/mnt/boot").to_expr());
+
+        let cpio = Cmd::new("cpio")
+            .arg("-o")
+            .opt("-H", "newc")
+            .opt("-R", "+0:+0")
+            .arg("--reproducible")
+            .to_expr();
+
+        let gzip = Cmd::new("gzip").arg("-9").to_expr();
+
+        cmds.push(
+            cpio.stdin("./keyfile.bin")
+                .pipe(gzip)
+                .stdout("/mnt/boot/initrd.keys.gz"),
+        );
 
         cmds
     }
@@ -134,6 +167,7 @@ pub struct LuksFilesystem {
 impl LuksFilesystem {
     fn cmds(&self, device: &str, label: &str) -> Vec<Expression> {
         let mut a = vec![
+            // Format and open the partition
             Cmd::new("cryptsetup")
                 .arg("luksFormat")
                 .arg(device)
@@ -143,6 +177,19 @@ impl LuksFilesystem {
                 .arg("open")
                 .arg(device)
                 .arg(format!("decrypted-{}", label))
+                .to_expr()
+                .input(self.passphrase.as_bytes()),
+            // Generate a keyfile and register it with the partition
+            Cmd::new("dd")
+                .arg("if=/dev/urandom")
+                .arg("of=./keyfile.bin")
+                .arg("bs=1024")
+                .arg("count=4")
+                .to_expr(),
+            Cmd::new("cryptsetup")
+                .arg("luksAddKey")
+                .arg(device)
+                .arg("./keyfile.bin")
                 .to_expr()
                 .input(self.passphrase.as_bytes()),
         ];

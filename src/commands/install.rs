@@ -1,6 +1,8 @@
 use config::{Config, ConfigError, File};
 use structopt::StructOpt;
 
+use crate::disk::duct_util::Cmd;
+
 use crate::disk;
 
 #[derive(StructOpt, Debug)]
@@ -28,48 +30,22 @@ impl InstallCommand {
     }
 }
 
-fn exec<S: AsRef<str>>(s: S) {
-    println!("{}", s.as_ref());
-}
-
-fn create_keyfile(password: &str, encrypted_target: &str) {
-    exec("dd if=/dev/urandom of=./keyfile.bin bs=1024 count=4");
-    exec(format!(
-        "echo {password} | cryptsetup luksAddKey {target} ./keyfile.bin",
-        password = password,
-        target = encrypted_target
-    ));
-
-    exec("mkdir /mnt/boot");
-
-    exec("echo ./keyfile.bin | cpio -o -H newc -R +0:+0 --reproducible | gzip -9 > /mnt/boot/initrd.keys.gz");
-}
-
 fn install(settings: &disk::DiskSettings) {
     let root_disk = settings.get_disk();
-    // .add_partition(
-    //     disk::Partition::new()
-    //         .label("zfsroot")
-    //         .code("8300")
-    //         .size("0").filesystem(disk::Filesystem::Luks(disk::LuksFilesystem {
-    //             passphrase: "jimminy".to_owned(),
-    //             filesystem: Box::new(disk::Filesystem::Zfs(settings.zfs.clone()))
-    //         })),
-    // );
 
     for cmd in root_disk.cmds() {
         println!("{:?}", cmd);
     }
 
-    exec("--------------------------------------------------------------------");
-
-    // Boot
-
-    // format_boot_partition();
-
-    create_keyfile("password", "/dev/disk/by-partlabel/zfsroot");
+    println!("--------------------------------------------------------------------");
 
     // Nixos config
 
-    exec("nixos-generate-config --root /mnt");
+    println!(
+        "{:?}",
+        Cmd::new("nixos-generate-config")
+            .arg("--root")
+            .arg("/mnt")
+            .to_expr()
+    );
 }

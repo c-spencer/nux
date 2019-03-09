@@ -16,7 +16,7 @@ Nominally "NixOS User eXperience", `nux` is intended to be a CLI tool for helpin
     - [x] Generate efi partition commands
     - [x] Generate ZFS commands for zpool + sensible core datasets
     - [x] Generate encrypted luks partition
-  - [ ] Setup boot with single-unlock password via keyfiles
+  - [x] Setup boot with single-unlock password via keyfiles
   - [ ] Execute commands
   - [ ] Save disk config to git
 - [ ] Initial NixOS config
