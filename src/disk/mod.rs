@@ -81,7 +81,7 @@ impl Disk {
                     .collect::<Vec<String>>(),
             )
             .arg(&self.device)
-            .to_expr()
+            .to_expr_with_wait(500)
     }
 
     pub fn cmds(&self) -> Vec<Expr> {
