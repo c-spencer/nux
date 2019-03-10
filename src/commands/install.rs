@@ -37,17 +37,20 @@ impl InstallCommand {
 fn install(command: &InstallCommand, settings: &disk::DiskSettings) {
     let root_disk = settings.get_disk();
 
+    let cmds = root_disk.cmds();
+
+    let pb = indicatif::ProgressBar::new(1 + (cmds.len() as u64));
+
     for cmd in root_disk.cmds() {
-        cmd.exec(command.exec);
+        cmd.exec(command.exec, &pb);
+        pb.inc(1);
     }
-
-    println!("--------------------------------------------------------------------");
-
-    // Nixos config
 
     Cmd::new("nixos-generate-config")
         .arg("--root")
         .arg("/mnt")
         .to_expr()
-        .exec(command.exec);
+        .exec(command.exec, &pb);
+
+    pb.finish();
 }
