@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::ffi::{OsStr, OsString};
 
 pub struct Cmd {
@@ -59,7 +60,7 @@ impl Expr {
     pub fn new(expr: duct::Expression) -> Expr {
         Expr {
             expr: expr,
-            wait: 0,
+            wait: 50,
         }
     }
 
@@ -70,21 +71,31 @@ impl Expr {
         }
     }
 
-    pub fn exec(&self, execute: bool) {
+    pub fn exec(&self, execute: bool, pb: &indicatif::ProgressBar) {
+        pb.println(format!("{:?}", self.expr));
+
         if execute {
-            match self.expr.stdout_capture().stderr_capture().read() {
+            match self.expr.stdout_capture().stderr_capture().run() {
                 Ok(result) => {
-                    println!("{}", result);
+                    let stdout = String::from_utf8(result.stdout).unwrap();
+                    if stdout.len() > 0 {
+                        pb.println(stdout);
+                    }
+
+                    let stderr = String::from_utf8(result.stderr).unwrap();
+                    if stderr.len() > 0 {
+                        pb.println(stderr);
+                    }
                 }
 
                 Err(err) => {
-                    println!("{}", err);
-                    println!("{:?}", self.expr);
+                    println!("err {:#?}", err);
+                    println!("source {:#?}", err.source());
+                    println!("description {:#?}", err.description());
+                    println!("{:#?}", self.expr);
                     panic!("Aborting.");
                 }
             }
-        } else {
-            println!("{:?}", self.expr);
         }
 
         if self.wait > 0 {

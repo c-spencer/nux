@@ -32,7 +32,7 @@ impl ZfsSettings {
             .arg("mountpoint=none")
             .args(self.properties.iter().flat_map(|m| {
                 m.iter()
-                    .flat_map(|(k, v)| vec!["-o".to_owned(), format!("{}={}", k, v)])
+                    .flat_map(|(k, v)| vec!["-O".to_owned(), format!("{}={}", k, v)])
             }))
             .arg(&self.pool.name)
             .arg(partition)
