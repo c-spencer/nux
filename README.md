@@ -39,7 +39,7 @@ nux install --disk /dev/nvme01
   - [x] Execute commands
   - [ ] Save disk config to git
 - [ ] Initial NixOS config
-  - [ ] Inject bootloader config
+  - [x] Inject bootloader config
   - [ ] Inject sensible nix zfs configuration
   - [ ] Store nix config in git
   - [ ] Pull nix config from existing git
