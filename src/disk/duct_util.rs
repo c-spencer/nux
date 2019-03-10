@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::ffi::{OsStr, OsString};
 
 pub struct Cmd {
@@ -72,19 +73,22 @@ impl Expr {
 
     pub fn exec(&self, execute: bool) {
         if execute {
-            match self.expr.stdout_capture().stderr_capture().read() {
+            match self.expr.stdout_capture().stderr_capture().run() {
                 Ok(result) => {
-                    println!("{}", result);
+                    println!("stdout {:?}", String::from_utf8(result.stdout));
+                    println!("stderr {:?}", String::from_utf8(result.stderr));
                 }
 
                 Err(err) => {
-                    println!("{}", err);
-                    println!("{:?}", self.expr);
+                    println!("err {:#?}", err);
+                    println!("source {:#?}", err.source());
+                    println!("description {:#?}", err.description());
+                    println!("{:#?}", self.expr);
                     panic!("Aborting.");
                 }
             }
         } else {
-            println!("{:?}", self.expr);
+            println!("{:#?}", self.expr);
         }
 
         if self.wait > 0 {

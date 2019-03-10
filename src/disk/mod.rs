@@ -155,7 +155,10 @@ impl EfiFilesystem {
                 .opt("-F", "32")
                 .arg(device)
                 .to_expr_with_wait(500),
-            Cmd::new("mkdir").arg(mount.clone()).to_expr(),
+            Cmd::new("mkdir")
+                .arg("-p")
+                .arg(mount.clone())
+                .to_expr_with_wait(500),
             Cmd::new("mount")
                 .arg(device)
                 .arg(mount)
