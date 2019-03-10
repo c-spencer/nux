@@ -87,7 +87,7 @@ impl Disk {
     pub fn cmds(&self) -> Vec<Expr> {
         let mut cmds = vec![self.format_cmd()];
 
-        for p in &self.partitions {
+        for p in self.partitions.iter().rev() {
             for cmd in p.cmds() {
                 cmds.push(cmd);
             }
