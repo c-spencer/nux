@@ -107,7 +107,7 @@ impl Disk {
         let gzip = Cmd::new("gzip").arg("-9").to_duct();
 
         cmds.push(Expr::new(
-            cpio.stdin("./keyfile.bin")
+            cpio.input("./keyfile.bin".as_bytes())
                 .pipe(gzip)
                 .stdout("/mnt/boot/initrd.keys.gz"),
         ));
