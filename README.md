@@ -1,5 +1,7 @@
 # nux
 
+[![Build Status](https://travis-ci.com/c-spencer/nux.svg?branch=master)](https://travis-ci.com/c-spencer/nux)
+
 Nominally "NixOS User eXperience", `nux` is intended to be a CLI tool for helping improve the end-to-end experience of using NixOS. Fundamentally it's actually a tool to help me learn Rust, NixOS, ZFS and other things I want to learn about.
 
 `nux` is intended to be an opinionated tool, which helps automate best practice procedures with regards to everything from initial partitioning through to development environments.
@@ -39,7 +41,7 @@ nux install --disk /dev/nvme01
   - [x] Execute commands
   - [ ] Save disk config to git
 - [ ] Initial NixOS config
-  - [ ] Inject bootloader config
+  - [x] Inject bootloader config
   - [ ] Inject sensible nix zfs configuration
   - [ ] Store nix config in git
   - [ ] Pull nix config from existing git

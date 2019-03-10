@@ -1,7 +1,7 @@
 [package]
 name = "nux"
 version = "0.1.0"
-authors = ["Chris Spencer <chris@simudyne.com>"]
+authors = ["Chris Spencer <nux@chris-spencer.dev>"]
 edition = "2018"
 
 [dependencies]
@@ -14,3 +14,5 @@ duct = "0.12.0"
 rpassword = "2.1"
 rust-embed = "4.3.0"
 indicatif = "0.11.0"
+handlebars = "1.1.0"
+rand = "0.6.5"
