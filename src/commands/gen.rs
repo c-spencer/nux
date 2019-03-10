@@ -1,10 +1,7 @@
+use crate::Asset;
 use std::fs::File;
 use std::io::prelude::*;
 use structopt::StructOpt;
-
-#[derive(RustEmbed)]
-#[folder = "assets"]
-struct Asset;
 
 #[derive(StructOpt, Debug)]
 pub enum GenerateCommand {

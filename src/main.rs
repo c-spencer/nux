@@ -9,6 +9,10 @@ mod disk;
 
 use commands::Command;
 
+#[derive(RustEmbed)]
+#[folder = "assets"]
+struct Asset;
+
 fn main() {
     Command::run();
 }
