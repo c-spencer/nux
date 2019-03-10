@@ -1,6 +1,5 @@
-use super::duct_util::Cmd;
+use super::duct_util::{Cmd, Expr};
 
-use duct::Expression;
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -24,7 +23,7 @@ pub struct ZfsDataset {
 }
 
 impl ZfsSettings {
-    pub fn zpool_cmd(&self, partition: &str) -> Expression {
+    pub fn zpool_cmd(&self, partition: &str) -> Expr {
         Cmd::new("zpool")
             .arg("create")
             .arg("-o")
@@ -40,7 +39,7 @@ impl ZfsSettings {
             .to_expr()
     }
 
-    pub fn dataset_cmds(&self) -> Vec<Expression> {
+    pub fn dataset_cmds(&self) -> Vec<Expr> {
         self.datasets
             .iter()
             .flat_map(|dataset| create_dataset(&self.pool.name, dataset))
@@ -48,7 +47,7 @@ impl ZfsSettings {
     }
 }
 
-fn create_dataset(root: &str, dataset: &ZfsDataset) -> Vec<Expression> {
+fn create_dataset(root: &str, dataset: &ZfsDataset) -> Vec<Expr> {
     let canonical_name = format!("{}/{}", root, dataset.name);
 
     let create = Cmd::new("zfs")
@@ -69,7 +68,7 @@ fn create_dataset(root: &str, dataset: &ZfsDataset) -> Vec<Expression> {
         .arg("zfs")
         .arg(canonical_name)
         .arg(&dataset.mount)
-        .to_expr();
+        .to_expr_with_wait(500);
 
     vec![create, mkdir, mount]
 }

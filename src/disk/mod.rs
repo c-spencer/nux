@@ -1,5 +1,4 @@
-use duct::Expression;
-use duct_util::Cmd;
+use duct_util::{Cmd, Expr};
 
 use std::collections::HashMap;
 
@@ -71,7 +70,7 @@ impl Disk {
         }
     }
 
-    fn format_cmd(&self) -> Expression {
+    fn format_cmd(&self) -> Expr {
         Cmd::new("sgdisk")
             .arg("-Z")
             .args(
@@ -85,7 +84,7 @@ impl Disk {
             .to_expr()
     }
 
-    pub fn cmds(&self) -> Vec<Expression> {
+    pub fn cmds(&self) -> Vec<Expr> {
         let mut cmds = vec![self.format_cmd()];
 
         for p in &self.partitions {
@@ -103,15 +102,15 @@ impl Disk {
             .opt("-H", "newc")
             .opt("-R", "+0:+0")
             .arg("--reproducible")
-            .to_expr();
+            .to_duct();
 
-        let gzip = Cmd::new("gzip").arg("-9").to_expr();
+        let gzip = Cmd::new("gzip").arg("-9").to_duct();
 
-        cmds.push(
+        cmds.push(Expr::new(
             cpio.stdin("./keyfile.bin")
                 .pipe(gzip)
                 .stdout("/mnt/boot/initrd.keys.gz"),
-        );
+        ));
 
         cmds
     }
@@ -130,7 +129,7 @@ pub enum Filesystem {
 }
 
 impl Filesystem {
-    fn cmds(&self, device: &str, label: &str) -> Vec<Expression> {
+    fn cmds(&self, device: &str, label: &str) -> Vec<Expr> {
         match self {
             Filesystem::Efi(efi) => efi.cmds(device, label),
             Filesystem::Luks(luks) => luks.cmds(device, label),
@@ -148,13 +147,19 @@ pub struct EfiFilesystem {
 }
 
 impl EfiFilesystem {
-    fn cmds(&self, device: &str, _label: &str) -> Vec<Expression> {
+    fn cmds(&self, device: &str, _label: &str) -> Vec<Expr> {
         let mount = format!("/mnt{mount}", mount = self.mount);
 
         vec![
-            Cmd::new("mkfs.fat").opt("-F", "32").arg(device).to_expr(),
+            Cmd::new("mkfs.fat")
+                .opt("-F", "32")
+                .arg(device)
+                .to_expr_with_wait(500),
             Cmd::new("mkdir").arg(mount.clone()).to_expr(),
-            Cmd::new("mount").arg(device).arg(mount).to_expr(),
+            Cmd::new("mount")
+                .arg(device)
+                .arg(mount)
+                .to_expr_with_wait(500),
         ]
     }
 }
@@ -165,20 +170,18 @@ pub struct LuksFilesystem {
 }
 
 impl LuksFilesystem {
-    fn cmds(&self, device: &str, label: &str) -> Vec<Expression> {
+    fn cmds(&self, device: &str, label: &str) -> Vec<Expr> {
         let mut a = vec![
             // Format and open the partition
             Cmd::new("cryptsetup")
                 .arg("luksFormat")
                 .arg(device)
-                .to_expr()
-                .input(self.passphrase.as_bytes()),
+                .as_expr(|e| e.input(self.passphrase.as_bytes())),
             Cmd::new("cryptsetup")
                 .arg("open")
                 .arg(device)
                 .arg(format!("decrypted-{}", label))
-                .to_expr()
-                .input(self.passphrase.as_bytes()),
+                .as_expr(|e| e.input(self.passphrase.as_bytes())),
             // Generate a keyfile and register it with the partition
             Cmd::new("dd")
                 .arg("if=/dev/urandom")
@@ -190,8 +193,7 @@ impl LuksFilesystem {
                 .arg("luksAddKey")
                 .arg(device)
                 .arg("./keyfile.bin")
-                .to_expr()
-                .input(self.passphrase.as_bytes()),
+                .as_expr(|e| e.input(self.passphrase.as_bytes())),
         ];
 
         a.append(&mut self.filesystem.cmds(
@@ -251,7 +253,7 @@ impl Partition {
         ]
     }
 
-    fn cmds(&self) -> Vec<Expression> {
+    fn cmds(&self) -> Vec<Expr> {
         match &self.filesystem {
             Some(fs) => fs.cmds(
                 &*format!(
