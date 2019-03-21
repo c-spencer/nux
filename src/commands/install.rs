@@ -92,24 +92,16 @@ fn install(
 
         data.insert("host_id".to_owned(), format!("{:x}", rng.gen::<u32>()));
 
-        let config_file = reg.render_template(&asset_as_str("boot-configuration.nix"), &data)?;
-        let stub_file = asset_as_str("configuration.nix");
+        let config_file = reg.render_template(&asset_as_str("configuration.nix"), &data)?;
 
         if dry_run {
             println!("{}", config_file);
-            println!("{}", stub_file);
         } else {
-            println!("Generating new configuration at /mnt/etc/nixos/boot-configuration.nix");
-
-            let mut file = fs::File::create("/mnt/etc/nixos/boot-configuration.nix")?;
-
-            file.write_all(config_file.as_bytes())?;
-
-            println!("Inserting stub configuration at /mnt/etc/nixos/configuration.nix");
+            println!("Inserting new configuration at /mnt/etc/nixos/configuration.nix");
 
             let mut file = fs::File::create("/mnt/etc/nixos/configuration.nix")?;
 
-            file.write_all(stub_file.as_bytes())?;
+            file.write_all(config_file.as_bytes())?;
         }
     }
 

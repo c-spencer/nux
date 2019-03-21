@@ -1,6 +1,7 @@
 use structopt::StructOpt;
 
 mod gen;
+mod initialise;
 mod install;
 mod repo;
 
@@ -14,6 +15,9 @@ pub enum Command {
 
     #[structopt(name = "gen")]
     Generate(gen::GenerateCommand),
+
+    #[structopt(name = "initialise")]
+    Initialise(initialise::InitialiseCommand),
 }
 
 impl Command {
@@ -32,6 +36,10 @@ impl Command {
             Command::Repository(cmd) => cmd.run(),
 
             Command::Generate(cmd) => {
+                cmd.run().unwrap();
+            }
+
+            Command::Initialise(cmd) => {
                 cmd.run().unwrap();
             }
         }
