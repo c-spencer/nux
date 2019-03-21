@@ -6,6 +6,14 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 pub struct InitialiseCommand {}
 
+#[derive(Debug)]
+struct InitConfig {
+    user: Option<String>,
+    git_repo: Option<String>,
+    tmp_repo: Option<String>,
+    directory: Option<String>,
+}
+
 impl InitialiseCommand {
     pub fn run(&self) -> Result<(), Box<std::error::Error>> {
         let theme = theme::ColorfulTheme {
@@ -16,34 +24,86 @@ impl InitialiseCommand {
             ..theme::ColorfulTheme::default()
         };
 
-        let username: String = dialoguer::Input::with_theme(&theme)
-            .with_prompt("Username")
-            .interact()?;
+        let mut conf = InitConfig {
+            user: None,
+            git_repo: None,
+            tmp_repo: None,
+            directory: None,
+        };
 
         let git_option = dialoguer::Select::with_theme(&theme)
             .with_prompt("Git repository")
             .default(0)
-            .item("new")
-            .item("existing")
+            .item("Existing")
+            .item("New")
             .interact()?;
 
-        let mut git: String = "".to_owned();
-
-        if git_option == 1 {
-            println!("For GitHub repositories, you can enter username/repo.");
-            println!("For other git repositories, enter the full URL.");
-            git = dialoguer::Input::with_theme(&theme)
-                .with_prompt("Git URL")
-                .interact()?;
+        if git_option == 0 {
+            existing_repo(&mut conf, &theme).unwrap();
+        } else {
+            conf.user = Some(
+                dialoguer::Input::with_theme(&theme)
+                    .with_prompt("Username")
+                    .interact()?,
+            );
         }
 
-        let directory: String = dialoguer::Input::with_theme(&theme)
-            .with_prompt("Configuration directory")
-            .default(".nux-config".to_owned())
-            .interact()?;
+        conf.directory = Some(
+            dialoguer::Input::with_theme(&theme)
+                .with_prompt("Configuration directory")
+                .default(".nux-config".to_owned())
+                .interact()?,
+        );
 
         // println!("{}", "Username must not be blank.".red().bold());
 
+        println!("{:#?}", conf);
+
         Ok(())
     }
+}
+
+fn existing_repo(
+    conf: &mut InitConfig,
+    theme: &theme::ColorfulTheme,
+) -> Result<(), Box<std::error::Error>> {
+    let git_provider = dialoguer::Select::with_theme(theme)
+        .with_prompt("Git provider")
+        .default(0)
+        .item("GitHub")
+        .item("GitLab")
+        .item("BitBucket")
+        .item("Other")
+        .interact()?;
+
+    match git_provider {
+        0...2 => {
+            let username: String = dialoguer::Input::with_theme(theme)
+                .with_prompt("Username")
+                .interact()?;
+
+            let repo: String = dialoguer::Input::with_theme(theme)
+                .with_prompt("Repository")
+                .default("nux-config".to_owned())
+                .interact()?;
+
+            let base_uri = match git_provider {
+                0 => "https://github.com",
+                1 => "https://gitlab.com",
+                _ => "https://bitbucket.com",
+            };
+
+            conf.git_repo = Some(format!("{}/{}/{}", base_uri, username, repo));
+        }
+
+        _ => {
+            conf.git_repo = Some(
+                dialoguer::Input::with_theme(theme)
+                    .with_prompt("Repository URL")
+                    .interact()?,
+            );
+        }
+    }
+
+    Ok(())
 }
